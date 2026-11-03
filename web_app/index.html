@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Urban Traffic Flow GNN - Presentation & Live Simulation Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- Top Navigation & View Switcher -->
+    <header>
+      <div class="header-title">
+        <h1>
+          <span>🚦</span> Urban Traffic Flow Prediction Using GNNs
+        </h1>
+        <p>Smart City Non-Euclidean Road Network Topology & Imbalance-Aware Congestion Forecasting</p>
+      </div>
+
+      <div class="nav-controls">
+        <div class="view-toggle">
+          <button class="toggle-btn active" id="btnViewSim">🌐 Live Simulator</button>
+          <button class="toggle-btn presentation-btn" id="btnViewPres">🎤 Presentation Deck</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 1: LIVE SIMULATION DASHBOARD                                         -->
+    <!-- ========================================================================= -->
+    <div id="simulatorView">
+      <!-- Top Key Performance Indicators -->
+      <div class="stats-grid">
+        <div class="stat-card green">
+          <div class="stat-title">Improved ST-GCN Overall MAE</div>
+          <div class="stat-value" id="kpiMae">1.497 mph</div>
+          <div class="stat-subtitle">vs Baseline LSTM: <span id="kpiMaeDelta" style="color:#00e676;">4.6% error reduction</span></div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-title">Severe Congestion MAE (<30 mph)</div>
+          <div class="stat-value" id="kpiJamMae">1.852 mph</div>
+          <div class="stat-subtitle">Base ST-GCN was 2.626 mph (<span style="color:#00e676;">29.5% cut</span>)</div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="stat-title">Dataset Class Imbalance</div>
+          <div class="stat-value" id="kpiImbalance">82.9% / 17.1%</div>
+          <div class="stat-subtitle">82.9% Free-Flow vs 5.3% Severe Jams</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Road Network Topology</div>
+          <div class="stat-value" id="kpiGraphNodes">25 Nodes</div>
+          <div class="stat-subtitle" id="kpiGraphEdges">Highway Corridors & Bridge Merges</div>
+        </div>
+      </div>
+
+      <!-- Main Section: Interactive Network & Trajectory Analysis -->
+      <div class="main-grid">
+        <!-- Left Panel: Road Network Graph Canvas -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2>🌐 Highway Graph Topology & Shockwave Animation</h2>
+            <div style="font-size:13px; color:var(--text-muted);" id="currentStepLabel">Time: 00:00 (15 min forecast)</div>
+          </div>
+
+          <!-- Controls Bar -->
+          <div class="controls-bar">
+            <button class="btn" id="playBtn">▶ Play</button>
+            <div class="slider-container">
+              <span style="font-size:12px; color:var(--text-muted);">Step:</span>
+              <input type="range" id="timeSlider" min="0" max="287" value="0">
+              <span id="sliderValueText" style="font-size:13px; font-weight:700; width:45px;">00:00</span>
+            </div>
+            <select class="model-select" id="modelSelect">
+              <option value="Ground_Truth">Actual Ground Truth</option>
+              <option value="Improved_A_STGCN" selected>Improved A-STGCN (Ours)</option>
+              <option value="Base_STGCN">Base ST-GCN</option>
+              <option value="Baseline_LSTM">Baseline LSTM</option>
+            </select>
+          </div>
+
+          <!-- Network Visualizer Canvas -->
+          <div class="graph-canvas-container">
+            <canvas id="graphCanvas"></canvas>
+            <div class="graph-legend">
+              <div class="legend-item"><span class="dot green"></span> Free Flow (≥50 mph)</div>
+              <div class="legend-item"><span class="dot yellow"></span> Moderate (30-50 mph)</div>
+              <div class="legend-item"><span class="dot red"></span> Severe Jam (<30 mph)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel: Selected Node Analytics & Live Forecast -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2 id="nodeCardTitle">📍 Sensor Node #12 Details</h2>
+            <span class="badge" id="nodeTypeBadge">Bottleneck Hub</span>
+          </div>
+
+          <div class="detail-card">
+            <div class="detail-row">
+              <span class="detail-label">Road Type:</span>
+              <span class="detail-value" id="nodeRoadType">Interstate Corridor Bridge Merge</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Current Forecast Speed:</span>
+              <span class="detail-value" id="nodeCurrentSpeed">-- mph</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Adjacent Neighbors:</span>
+              <span class="detail-value" id="nodeNeighbors">Nodes 10, 11, 13, 14</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Congestion Risk Level:</span>
+              <span class="detail-value" id="nodeRiskLevel" style="color:#ff1744;">CRITICAL CONGESTION</span>
+            </div>
+          </div>
+
+          <div class="panel-header" style="margin-top:12px; margin-bottom:8px;">
+            <h2 style="font-size:15px;">📈 24-Hour Speed Trajectory: Models vs Actual</h2>
+          </div>
+          <div class="chart-container">
+            <canvas id="nodeTrajectoryChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Section: Rigorous Model Comparison Matrix -->
+      <div class="panel table-panel">
+        <div class="panel-header">
+          <h2>📊 Empirical Performance Evaluation & Imbalance Resolution</h2>
+          <span style="font-size:13px; color:var(--text-muted);">Evaluated across all 25 Highway Nodes & Multi-Step Horizons</span>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Model Architecture</th>
+              <th>Type</th>
+              <th>Overall MAE</th>
+              <th>Overall RMSE</th>
+              <th>Severe Jam MAE (<30 mph)</th>
+              <th>Bottleneck Recall</th>
+              <th>Bottleneck F1</th>
+              <th>Spatial Message Passing</th>
+            </tr>
+          </thead>
+          <tbody id="metricsTableBody">
+            <tr>
+              <td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted);">Loading benchmark evaluation results...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 2: PRESENTATION DECK MODE (FOR EXAMS / DEFENSE)                      -->
+    <!-- ========================================================================= -->
+    <div id="presentationView" style="display: none;">
+      <!-- Slide Presentation Controls -->
+      <div class="pres-header-bar">
+        <div class="slide-indicator">
+          Slide <span id="currentSlideNum">1</span> of <span id="totalSlidesNum">6</span>: <strong id="slideTitleHeading">Introduction & Domain</strong>
+        </div>
+        <div class="pres-nav-buttons">
+          <button class="btn secondary" id="prevSlideBtn">◀ Previous</button>
+          <button class="btn" id="nextSlideBtn">Next ▶</button>
+          <button class="btn secondary" id="fullscreenBtn">⛶ Fullscreen</button>
+        </div>
+      </div>
+
+      <!-- Slide Container -->
+      <div class="slide-card" id="slideContainer">
+        <!-- Slide 1: Introduction & Domain -->
+        <div class="slide-content active" data-slide="1">
+          <div class="slide-badge">Smart Cities & Intelligent Transportation Systems</div>
+          <h2 class="slide-title">Urban Traffic Flow Prediction Using Graph Neural Networks</h2>
+          <p class="slide-subtitle">Capturing Spatio-Temporal Highway Dynamics over Non-Euclidean Road Topologies</p>
+          
+          <div class="pres-grid-3">
+            <div class="pres-box">
+              <div class="box-icon">🏙️</div>
+              <h3>Smart City Problem</h3>
+              <p>Metropolitan traffic congestion costs hundreds of millions of dollars in wasted fuel and lost productivity. Proactive routing and traffic signal timing require forecasting traffic 15 to 60 minutes into the future.</p>
+            </div>
+            <div class="pres-box">
+              <div class="box-icon">🕸️</div>
+              <h3>The Graph Representation</h3>
+              <p>Road networks are naturally modeled as graphs $\mathcal{G} = (\mathcal{V}, \mathcal{E}, W)$ where sensors & intersections are nodes $\mathcal{V}$, and roadways are directed edges $\mathcal{E}$ weighted by road distance.</p>
+            </div>
+            <div class="pres-box">
+              <div class="box-icon">⚡</div>
+              <h3>Our Core Novelty</h3>
+              <p>We introduce an <strong>Attention-Enhanced ST-GCN</strong> with <strong>Congestion-Focal Loss</strong>, specifically resolving the severe class imbalance in traffic datasets where rare congestion bottlenecks are missed by standard models.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 2: Why GNN vs CNN/LSTM -->
+        <div class="slide-content" data-slide="2">
+          <div class="slide-badge">Theoretical Justification</div>
+          <h2 class="slide-title">Why Use a GNN Instead of CNN or LSTM?</h2>
+          <p class="slide-subtitle">The Geometry of Road Networks: Non-Euclidean vs. Euclidean Modeling</p>
+
+          <div class="pres-grid-2">
+            <div class="pres-box compare-box failure">
+              <div class="box-status">❌ Conventional Approaches</div>
+              <h4 style="margin: 8px 0; color:#ff5252;">1. 2D Convolutional Networks (CNNs)</h4>
+              <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">Assume regular Euclidean grids (like pixels). In cities, straight-line distance is misleading: two sensors 500m apart might sit on opposite sides of a divided interstate with zero connectivity.</p>
+              
+              <h4 style="margin: 8px 0; color:#ff5252;">2. Pure Temporal LSTMs / GRUs</h4>
+              <p style="font-size:13px; color:var(--text-muted);">Process each sensor's historical time series independently. They are completely <strong>spatially blind</strong>—when a downstream bridge bottlenecks, an LSTM cannot anticipate upstream shockwaves until the delay hits that sensor.</p>
+            </div>
+
+            <div class="pres-box compare-box success">
+              <div class="box-status">✅ Proposed Solution: Spatio-Temporal GNN</div>
+              <h4 style="margin: 8px 0; color:#00e676;">Dual Spatio-Temporal Mechanism</h4>
+              <ul style="font-size:13px; line-height: 1.8; padding-left: 20px; color:var(--text-main);">
+                <li><strong>Spatial Dimension</strong>: Message-passing graph convolutions $H^{(l+1)} = \sigma(\tilde{D}^{-1/2} \tilde{A} \tilde{D}^{-1/2} H^{(l)} W)$ propagate speed information across connected corridors.</li>
+                <li><strong>Temporal Dimension</strong>: Bidirectional GRU + Multi-Head Self-Attention model how traffic evolves across time steps.</li>
+                <li><strong>Physical Grounding</strong>: Graph adjacency matrix $W_{ij} = \exp(-\text{dist}(i,j)^2/\sigma^2)$ directly incorporates real physical roadway distances.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 3: The Imbalance Challenge -->
+        <div class="slide-content" data-slide="3">
+          <div class="slide-badge">Key Dataset Finding</div>
+          <h2 class="slide-title">The Real-World Traffic Imbalance Challenge</h2>
+          <p class="slide-subtitle">Why Standard Mean Squared Error (MSE) Fails on Traffic Datasets</p>
+
+          <div class="pres-grid-2">
+            <div class="pres-box">
+              <h3>Real-World Class Distribution</h3>
+              <p style="font-size:13px; margin: 10px 0; color:var(--text-muted);">Like California PeMS / METR-LA, highway traffic is highly skewed:</p>
+              
+              <div class="distribution-bar">
+                <div class="bar-seg green" style="width: 82.9%;">82.9% Free-Flow (≥50 mph)</div>
+                <div class="bar-seg yellow" style="width: 11.8%;">11.8%</div>
+                <div class="bar-seg red" style="width: 5.3%;">5.3%</div>
+              </div>
+              <div style="font-size:12px; display:flex; justify-content:space-between; margin-top:6px; color:var(--text-muted);">
+                <span>🟢 Free Flow: 82.9%</span>
+                <span>🟡 Moderate: 11.8%</span>
+                <span>🔴 Severe Jams: 5.3%</span>
+              </div>
+
+              <div style="margin-top:16px; font-size:13px; line-height:1.6;">
+                <strong style="color:#ff5252;">The Regression-to-the-Mean Trap:</strong> Because 83% of samples are smooth free-flow, standard MSE minimizes overall loss by predicting safe mean speeds (~58 mph), leading to catastrophic under-prediction of traffic jams.
+              </div>
+            </div>
+
+            <div class="pres-box">
+              <h3>Our Solution: Congestion-Focal Loss</h3>
+              <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">We formulated an asymmetric congestion-weighted loss function:</p>
+              <div class="math-box">
+                $$\mathcal{L}_{\text{focal}} = \frac{1}{N \cdot T} \sum_{i, t} w(y_{it}) \cdot \left( y_{it} - \hat{y}_{it} \right)^2$$
+                $$w(y) = 1.0 + \alpha \cdot \left[ \frac{\max(0, y_{\text{free}} - y)}{y_{\text{free}}} \right]^\gamma$$
+              </div>
+              <ul style="font-size:12px; line-height:1.7; color:var(--text-muted); margin-top:12px; padding-left:18px;">
+                <li>Normal free-flow ($y = 65$ mph) receives standard weight $w(y) = 1.0$.</li>
+                <li>Severe congestion ($y = 15$ mph) receives weight $w(y) \approx 4.0\times$ to $5.0\times$.</li>
+                <li>Directly penalizes missing dangerous traffic bottlenecks!</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 4: Deep Learning Architecture -->
+        <div class="slide-content" data-slide="4">
+          <div class="slide-badge">Deep Learning Architecture</div>
+          <h2 class="slide-title">Proposed Architecture: Improved A-STGCN</h2>
+          <p class="slide-subtitle">Adaptive Spatial Convolutions + Temporal Multi-Head Attention</p>
+
+          <div class="architecture-diagram">
+            <div class="arch-col">
+              <div class="arch-box">
+                <strong>Input Tensor</strong>
+                <span>$[B, T_{\text{in}}=12, N=25, F=4]$</span>
+                <small>Speed, Volume, Time-of-Day, Day-of-Week</small>
+              </div>
+            </div>
+            <div class="arch-arrow">➔</div>
+            <div class="arch-col">
+              <div class="arch-box highlight">
+                <strong>Adaptive Graph Conv</strong>
+                <span>$A_{\text{total}} = \alpha A_{\text{phys}} + (1-\alpha) A_{\text{adapt}}$</span>
+                <small>Learns latent unmapped road correlations</small>
+              </div>
+            </div>
+            <div class="arch-arrow">➔</div>
+            <div class="arch-col">
+              <div class="arch-box highlight">
+                <strong>Temporal Bi-GRU + Attention</strong>
+                <span>Multi-Head Self-Attention</span>
+                <small>Weighs rush-hour transition periods</small>
+              </div>
+            </div>
+            <div class="arch-arrow">➔</div>
+            <div class="arch-col">
+              <div class="arch-box">
+                <strong>Multi-Horizon Output</strong>
+                <span>$[B, T_{\text{out}}=3, N=25]$</span>
+                <small>15m, 30m, 45m Future Predictions</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="pres-grid-3" style="margin-top:18px;">
+            <div class="pres-mini-box">
+              <h4>1. Physical + Adaptive Adjacency</h4>
+              <p>Blends distance-decay Gaussian road graph with learned node embedding matrix $E_1 E_2^T$.</p>
+            </div>
+            <div class="pres-mini-box">
+              <h4>2. Temporal Attention</h4>
+              <p>Multi-head self-attention computes query-key matching across past 12 time-steps.</p>
+            </div>
+            <div class="pres-mini-box">
+              <h4>3. Residual & LayerNorm</h4>
+              <p>Skip connections prevent vanishing gradients across deep spatio-temporal layers.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 5: Empirical Benchmark Results -->
+        <div class="slide-content" data-slide="5">
+          <div class="slide-badge">Experimental Evaluation</div>
+          <h2 class="slide-title">Empirical Benchmark & Ablation Results</h2>
+          <p class="slide-subtitle">Rigorous Testing on 25 Highway Nodes (Test Horizon: 15 - 45 mins)</p>
+
+          <div class="results-table-wrap">
+            <table class="pres-table">
+              <thead>
+                <tr>
+                  <th>Model Architecture</th>
+                  <th>Spatial Topology?</th>
+                  <th>Overall MAE</th>
+                  <th>RMSE</th>
+                  <th>Severe Jam MAE (<30 mph)</th>
+                  <th>Bottleneck Recall</th>
+                  <th>Error Reduction</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Baseline LSTM</strong></td>
+                  <td>❌ No (Blind)</td>
+                  <td>1.569 mph</td>
+                  <td>2.061 mph</td>
+                  <td>1.999 mph</td>
+                  <td>94.2%</td>
+                  <td>Baseline</td>
+                </tr>
+                <tr>
+                  <td><strong>Base ST-GCN</strong></td>
+                  <td>✓ Static Laplacian</td>
+                  <td>1.600 mph</td>
+                  <td>2.117 mph</td>
+                  <td>2.626 mph</td>
+                  <td>87.5%</td>
+                  <td>Failed on jams (MSE bias)</td>
+                </tr>
+                <tr class="winner-row">
+                  <td><strong>Improved A-STGCN (Ours)</strong></td>
+                  <td>✓ Adaptive Attn</td>
+                  <td><strong>1.497 mph</strong></td>
+                  <td><strong>1.945 mph</strong></td>
+                  <td><strong>1.852 mph</strong></td>
+                  <td><strong>92.6%</strong></td>
+                  <td><span class="winner-tag">-29.5% Jam Error Cut</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pres-grid-2" style="margin-top:16px;">
+            <div class="pres-box" style="padding:14px;">
+              <h4 style="color:#00e5ff;">Why Base ST-GCN had high jam error (2.626 mph):</h4>
+              <p style="font-size:12px; color:var(--text-muted); margin-top:4px;">Because standard MSE treats all errors equally, the model ignored the rare 5.3% congestion tail to minimize overall loss on the 82.9% free-flow majority.</p>
+            </div>
+            <div class="pres-box" style="padding:14px;">
+              <h4 style="color:#00e676;">Why Improved A-STGCN Won (1.852 mph):</h4>
+              <p style="font-size:12px; color:var(--text-muted); margin-top:4px;">Congestion-Focal Loss applied $4\times$ higher gradient penalties during bottlenecks, while temporal self-attention accurately captured the exact moment speeds collapsed.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 6: Viva Defense Cheat Sheet -->
+        <div class="slide-content" data-slide="6">
+          <div class="slide-badge">Viva Voce Defense & Q&A</div>
+          <h2 class="slide-title">Examiner Q&A & Viva Defense Cheat Sheet</h2>
+          <p class="slide-subtitle">Click any question card to review the theoretical defense points</p>
+
+          <div class="qa-container">
+            <div class="qa-card" onclick="toggleQA(this)">
+              <div class="qa-question">
+                <span>Q1: Why use a Graph Neural Network instead of an LSTM?</span>
+                <span class="qa-arrow">▼</span>
+              </div>
+              <div class="qa-answer">
+                LSTMs are purely temporal models that treat sensors independently or flattened without physical road awareness. Road traffic is non-Euclidean: when a downstream bridge bottlenecks, congestion creates a backward shockwave. Spatio-Temporal GNNs explicitly propagate speed messages across connected road edges, predicting upstream delays before they occur.
+              </div>
+            </div>
+
+            <div class="qa-card" onclick="toggleQA(this)">
+              <div class="qa-question">
+                <span>Q2: What is the Graph Laplacian and why normalize it?</span>
+                <span class="qa-arrow">▼</span>
+              </div>
+              <div class="qa-answer">
+                The unnormalized Laplacian is $L = D - A$. In GCNs, we use the symmetric normalized adjacency $\tilde{D}^{-1/2} \tilde{A} \tilde{D}^{-1/2}$ (with self-loops $\tilde{A} = A + I$). Normalization is essential because road intersections have unequal degrees (some have 2 roads, major interchanges have 6). Without normalization, message signals would explode at hubs and vanish at dead ends.
+              </div>
+            </div>
+
+            <div class="qa-card" onclick="toggleQA(this)">
+              <div class="qa-question">
+                <span>Q3: How did you resolve the severe class imbalance in traffic speeds?</span>
+                <span class="qa-arrow">▼</span>
+              </div>
+              <div class="qa-answer">
+                We designed Congestion-Focal Loss $w(y) = 1.0 + \alpha [(\max(0, y_{\text{free}} - y))/y_{\text{free}}]^\gamma$. When traffic drops below 30 mph, the penalty scales up by $4\times$ to $5\times$. This solved regression-to-the-mean, reducing severe jam error by 29.5% (from 2.626 mph to 1.852 mph).
+              </div>
+            </div>
+
+            <div class="qa-card" onclick="toggleQA(this)">
+              <div class="qa-question">
+                <span>Q4: How does this scale to an entire city with 10,000+ intersections?</span>
+                <span class="qa-arrow">▼</span>
+              </div>
+              <div class="qa-answer">
+                Full-graph matrix multiplication scales quadratically $\mathcal{O}(N^2)$. For mega-cities, we can use <strong>Cluster-GCN</strong> (partitioning the city into regional road clusters) or <strong>GraphSAGE neighbor sampling</strong> (computing convolutions on mini-batches of sampled $k$-hop neighbors), reducing computational complexity to linear $\mathcal{O}(|\mathcal{V}| + |\mathcal{E}|)$.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

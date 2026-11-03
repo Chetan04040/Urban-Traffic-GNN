@@ -1,0 +1,104 @@
+{
+  "Baseline_LSTM": {
+    "description": "Pure Temporal LSTM (No spatial awareness)",
+    "training_time_sec": 28.3,
+    "test_metrics": {
+      "MAE": 1.569,
+      "RMSE": 2.061,
+      "MAPE": 2.82
+    },
+    "regime_metrics": {
+      "free_flow_regime": {
+        "count": 59502,
+        "pct_of_data": 88.74,
+        "MAE": 1.538,
+        "RMSE": 1.982
+      },
+      "moderate_regime": {
+        "count": 5919,
+        "pct_of_data": 8.83,
+        "MAE": 1.76,
+        "RMSE": 2.279
+      },
+      "severe_congestion_regime": {
+        "count": 1629,
+        "pct_of_data": 2.43,
+        "MAE": 1.999,
+        "RMSE": 3.536
+      },
+      "bottleneck_detection": {
+        "Precision": 0.943,
+        "Recall": 0.942,
+        "F1_Score": 0.942
+      }
+    }
+  },
+  "Base_STGCN": {
+    "description": "Standard ST-GCN (Normalized Laplacian + MSE)",
+    "training_time_sec": 29.2,
+    "test_metrics": {
+      "MAE": 1.6,
+      "RMSE": 2.117,
+      "MAPE": 2.95
+    },
+    "regime_metrics": {
+      "free_flow_regime": {
+        "count": 59502,
+        "pct_of_data": 88.74,
+        "MAE": 1.537,
+        "RMSE": 1.99
+      },
+      "moderate_regime": {
+        "count": 5919,
+        "pct_of_data": 8.83,
+        "MAE": 1.948,
+        "RMSE": 2.524
+      },
+      "severe_congestion_regime": {
+        "count": 1629,
+        "pct_of_data": 2.43,
+        "MAE": 2.626,
+        "RMSE": 4.079
+      },
+      "bottleneck_detection": {
+        "Precision": 0.97,
+        "Recall": 0.875,
+        "F1_Score": 0.92
+      }
+    }
+  },
+  "Improved_A_STGCN": {
+    "description": "Improved A-STGCN (Adaptive Topology + Temporal Self-Attention + Focal Loss)",
+    "training_time_sec": 102.5,
+    "test_metrics": {
+      "MAE": 1.497,
+      "RMSE": 1.945,
+      "MAPE": 2.68
+    },
+    "regime_metrics": {
+      "free_flow_regime": {
+        "count": 59502,
+        "pct_of_data": 88.74,
+        "MAE": 1.478,
+        "RMSE": 1.879
+      },
+      "moderate_regime": {
+        "count": 5919,
+        "pct_of_data": 8.83,
+        "MAE": 1.59,
+        "RMSE": 2.019
+      },
+      "severe_congestion_regime": {
+        "count": 1629,
+        "pct_of_data": 2.43,
+        "MAE": 1.852,
+        "RMSE": 3.455
+      },
+      "bottleneck_detection": {
+        "Precision": 0.958,
+        "Recall": 0.926,
+        "F1_Score": 0.942
+      }
+    }
+  }
+}

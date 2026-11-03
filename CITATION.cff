@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this software in your research or course projects, please cite it as below."
+authors:
+  - family-names: "Rupchandani"
+    given-names: "Chetan"
+title: "Urban Traffic Flow Prediction Using Graph Neural Networks (GNNs)"
+version: 1.0.0
+date-released: 2026-11-04
+url: "https://github.com/Chetan04040/Urban-Traffic-GNN"
+keywords:
+  - "graph-neural-networks"
+  - "spatio-temporal"
+  - "traffic-flow-prediction"
+  - "st-gcn"
+  - "smart-cities"
+  - "deep-learning"
+  - "class-imbalance"
